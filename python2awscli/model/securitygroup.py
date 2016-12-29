@@ -1,10 +1,9 @@
-#!/usr/bin/env python3
 """ -*- coding: utf-8 -*- """
-from awscli import awscli
 from pprint import pprint
 
-import exception
 import must
+from awscli import awscli
+from error import AWSNotFound, ParseError, AWSDuplicate, TooMany
 
 
 class BaseSecurityGroup(object):
@@ -27,7 +26,7 @@ class BaseSecurityGroup(object):
         self.owner = None
         try:
             self._get()
-        except exception.AWSNotFound:
+        except AWSNotFound:
             self._create()
             self._get()
         inbound = must.be_list(inbound)
@@ -44,7 +43,7 @@ class BaseSecurityGroup(object):
         :return: Bool
         """
         if not isinstance(requested, list):
-            raise exception.ParseError(
+            raise ParseError(
                 'SecurityGroup {0}, need a list of dicts, instead got "{1}"'.format(self.name, requested))
         for rule in requested:
             if rule not in active:
@@ -110,7 +109,7 @@ class BaseSecurityGroup(object):
                 ]
         try:
             awscli(command)
-        except exception.AWSDuplicate:
+        except AWSDuplicate:
             return False  # OK if it already exists.
         print('Created {0}'.format(command))  # TODO: Log(...)
         return True
@@ -124,7 +123,7 @@ class BaseSecurityGroup(object):
         result = awscli(command)
         size = len(result['SecurityGroups'])
         if size != 1:
-            raise exception.TooMany('Command {0} expected 1 result, got {1}'.format(command, size))
+            raise TooMany('Command {0} expected 1 result, got {1}'.format(command, size))
         security_groups = result['SecurityGroups'][0]
         self.id = security_groups['GroupId']
         self.owner = security_groups['OwnerId']

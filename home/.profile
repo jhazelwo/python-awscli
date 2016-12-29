@@ -20,6 +20,5 @@ export EDITOR
 PATH=${PATH}:/aws/bin:/aws/sbin
 export PATH
 
-PYTHONPATH=/aws
+PYTHONPATH=/aws:/aws/python2awscli
 export PYTHONPATH
-

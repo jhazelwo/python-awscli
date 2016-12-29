@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """ -*- coding: utf-8 -*- """
 
 import sys
@@ -29,10 +28,10 @@ class AWSDuplicate(Exception):
     pass
 
 
-def quiet_hook(type, value, traceback):
-    if type in [AWSCLIError, ParseError, TooMany, AWSNotFound, AWSDuplicate]:
-        print('{0}: {1}'.format(type.__name__, value))
+def quiet_hook(kind, message, traceback):
+    if kind in [AWSCLIError, ParseError, TooMany, AWSNotFound, AWSDuplicate]:
+        print('{0}: {1}'.format(kind.__name__, message))
     else:
-        sys.__excepthook__(type, value, traceback)
+        sys.__excepthook__(kind, message, traceback)
 
 sys.excepthook = quiet_hook

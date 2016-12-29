@@ -1,38 +1,10 @@
-#!/usr/bin/env python3
 """ -*- coding: utf-8 -*- """
-from awscli import awscli
-from pprint import pprint
-
-import exception
 import must
+from awscli import awscli
+from error import TooMany
 
 
 class BaseInstance(object):
-    """
-    run-instances
-    args left to code for:
-
-    [--user-data <value>]
-    [--placement <value>]
-    [--kernel-id <value>]
-    [--ramdisk-id <value>]
-    [--block-device-mappings <value>]
-    [--monitoring <value>]
-    [--subnet-id <value>]
-    [--disable-api-termination | --enable-api-termination]
-    [--instance-initiated-shutdown-behavior <value>]
-    [--private-ip-address <value>]
-    [--ipv6-addresses <value>]
-    [--ipv6-address-count <value>]
-    [--client-token <value>]
-    [--additional-info <value>]
-    [--network-interfaces <value>]
-    [--iam-instance-profile <value>]
-    [--ebs-optimized | --no-ebs-optimized]
-    [--secondary-private-ip-addresses <value>]
-    [--secondary-private-ip-address-count <value>]
-
-    """
     def __init__(self, name, region, vpc, image, key, count, size, groups, public=True, script=None):
         self.name = name
         self.region = region
@@ -58,7 +30,7 @@ class BaseInstance(object):
         if self.deficit < 1:
             # This should never usually happen but is possible if the User changes the count to a lower
             # number after the original instance(s) were created.
-            raise exception.TooMany('Cannot create {0} instances of {1}'.format(self.deficit, self.name))
+            raise TooMany('Cannot create {0} instances of {1}'.format(self.deficit, self.name))
         command = ['ec2', 'run-instances', '--region', self.region,
                    '--instance-type', self.size,
                    '--count', str(self.deficit),

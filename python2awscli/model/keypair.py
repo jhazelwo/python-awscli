@@ -1,12 +1,10 @@
 #!/usr/bin/env python3
 """ -*- coding: utf-8 -*- """
 import os
-
-from awscli import awscli
-
 import fileasobj
 
-import exception
+from awscli import awscli
+from error import AWSNotFound, AWSDuplicate
 
 
 class BaseKeyPair(object):
@@ -17,7 +15,7 @@ class BaseKeyPair(object):
         self.fingerprint = None
         try:
             self._get()
-        except exception.AWSNotFound:
+        except AWSNotFound:
             self._create()
             self._get()
 
@@ -29,7 +27,7 @@ class BaseKeyPair(object):
             private_key = fileasobj.FileAsObj()
             private_key.filename = path_to_key
         if private_key.contents:
-            raise exception.AWSDuplicate('Non-empty file {0} already exists.'.format(path_to_key))
+            raise AWSDuplicate('Non-empty file {0} already exists.'.format(path_to_key))
         private_key.save()  # Make sure we can write to the file before starting work.
         command = ['ec2', 'create-key-pair', '--region', self.region,
                    '--key-name', self.name,

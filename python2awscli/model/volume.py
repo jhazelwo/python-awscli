@@ -2,9 +2,9 @@
 """ -*- coding: utf-8 -*- """
 import time
 from pprint import pprint
-from awscli import awscli
 
-import exception
+from awscli import awscli
+from error import TooMany
 
 
 class BaseVolume(object):
@@ -59,7 +59,7 @@ class BaseVolume(object):
         if not result:
             return False
         if len(result) > 1:
-            raise exception.TooMany('volume._get() returned more than 1 result. Command={0}'.format(command))
+            raise TooMany('volume._get() returned more than 1 result. Command={0}'.format(command))
         self.id = result[0]['VolumeId']
         print('Got {0}'.format(command))  # TODO: Log(...)
         return True

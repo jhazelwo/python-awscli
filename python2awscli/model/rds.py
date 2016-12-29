@@ -1,52 +1,8 @@
-#!/usr/bin/env python3
 """ -*- coding: utf-8 -*- """
 from pprint import pprint
-from awscli import awscli
-import exception
+
 import must
-
-"""
-
-          [--db-name <value>]
-          --db-instance-identifier <value>
-          [--allocated-storage <value>]
-          --db-instance-class <value>
-          --engine <value>
-          [--master-username <value>]
-          [--master-user-password <value>]
-          [--db-security-groups <value>]
-          [--vpc-security-group-ids <value>]
-          [--availability-zone <value>]
-          [--db-subnet-group-name <value>]
-          [--preferred-maintenance-window <value>]
-          [--db-parameter-group-name <value>]
-          [--backup-retention-period <value>]
-          [--preferred-backup-window <value>]
-          [--port <value>]
-          [--multi-az | --no-multi-az]
-          [--engine-version <value>]
-          [--auto-minor-version-upgrade | --no-auto-minor-version-upgrade]
-          [--license-model <value>]
-          [--iops <value>]
-          [--option-group-name <value>]
-          [--character-set-name <value>]
-          [--publicly-accessible | --no-publicly-accessible]
-          [--tags <value>]
-          [--db-cluster-identifier <value>]
-          [--storage-type <value>]
-          [--tde-credential-arn <value>]
-          [--tde-credential-password <value>]
-          [--storage-encrypted | --no-storage-encrypted]
-          [--kms-key-id <value>]
-          [--domain <value>]
-          [--copy-tags-to-snapshot | --no-copy-tags-to-snapshot]
-          [--monitoring-interval <value>]
-          [--monitoring-role-arn <value>]
-          [--domain-iam-role-name <value>]
-          [--promotion-tier <value>]
-          [--timezone <value>]
-
-"""
+from awscli import awscli
 
 
 class BaseRDS(object):
@@ -100,4 +56,5 @@ class BaseRDS(object):
         command.extend(self.groups)
         result = awscli(command)
         pprint(result)
+        print('Created {0}'.format(command))  # TODO: Log(...)
         return True

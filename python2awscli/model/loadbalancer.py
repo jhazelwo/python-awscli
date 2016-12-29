@@ -1,11 +1,10 @@
-#!/usr/bin/env python3
 """ -*- coding: utf-8 -*- """
-from awscli import awscli
 from pprint import pprint
 
-import exception
-from task import merge_elements
 import must
+from awscli import awscli
+from task import merge_elements
+from error import AWSNotFound
 
 
 class BaseLoadBalancer(object):
@@ -35,7 +34,7 @@ class BaseLoadBalancer(object):
         zones = must.be_list(zones)
         try:
             self._get()
-        except exception.AWSNotFound:
+        except AWSNotFound:
             self._create(zones, groups, scheme, listeners)
         merge_elements(listeners, self.listeners, self._add_listener, self._rm_listener)
         merge_elements(zones, self.zones, self._add_zone, self._rm_zone, add_first=True)
