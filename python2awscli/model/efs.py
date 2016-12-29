@@ -10,3 +10,9 @@ class BaseEFS(object):
         self.region = region
         self.kind = kind
         self.zones = zones
+
+    def _create(self):
+        pass
+
+    def _get(self):
+        pass

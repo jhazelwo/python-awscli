@@ -1,9 +1,9 @@
 """ -*- coding: utf-8 -*- """
 from pprint import pprint
 
-import must
-from awscli import awscli
-from error import AWSNotFound, ParseError, AWSDuplicate, TooMany
+from python2awscli import bin_aws as awscli
+from python2awscli.error import AWSNotFound, ParseError, AWSDuplicate, TooMany
+from python2awscli import must
 
 
 class BaseSecurityGroup(object):

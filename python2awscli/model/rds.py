@@ -1,8 +1,8 @@
 """ -*- coding: utf-8 -*- """
 from pprint import pprint
 
-import must
-from awscli import awscli
+from python2awscli import bin_aws as awscli
+from python2awscli import must
 
 
 class BaseRDS(object):

@@ -3,8 +3,8 @@
 import os
 import fileasobj
 
-from awscli import awscli
-from error import AWSNotFound, AWSDuplicate
+from python2awscli import bin_aws as awscli
+from python2awscli.error import AWSNotFound, AWSDuplicate
 
 
 class BaseKeyPair(object):

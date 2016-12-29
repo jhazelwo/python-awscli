@@ -2,7 +2,7 @@
 Do one thing, and do it well."""
 import re
 
-from error import ParseError
+from python2awscli.error import ParseError
 
 
 def is_ip(address):

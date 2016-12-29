@@ -3,8 +3,8 @@
 import time
 from pprint import pprint
 
-from awscli import awscli
-from error import TooMany
+from python2awscli import bin_aws as awscli
+from python2awscli.error import TooMany
 
 
 class BaseVolume(object):

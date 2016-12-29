@@ -1,9 +1,8 @@
 #!/usr/bin/env python3
 """ -*- coding: utf-8 -*- """
 
-from awscli import awscli
-
-from error import TooMany
+from python2awscli import bin_aws as awscli
+from python2awscli.error import TooMany
 
 
 class BaseVPC(object):

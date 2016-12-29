@@ -1,7 +1,7 @@
 """ -*- coding: utf-8 -*- """
-import must
-from awscli import awscli
-from error import TooMany
+from python2awscli import bin_aws as awscli
+from python2awscli.error import TooMany
+from python2awscli import must
 
 
 class BaseInstance(object):

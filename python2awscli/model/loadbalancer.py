@@ -1,10 +1,10 @@
 """ -*- coding: utf-8 -*- """
 from pprint import pprint
 
-import must
-from awscli import awscli
-from task import merge_elements
-from error import AWSNotFound
+from python2awscli import bin_aws as awscli
+from python2awscli.task import merge_elements
+from python2awscli.error import AWSNotFound
+from python2awscli import must
 
 
 class BaseLoadBalancer(object):
