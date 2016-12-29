@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 """ -*- coding: utf-8 -*- """
-import time
+from time import sleep
 from pprint import pprint
 
 from python2awscli import bin_aws as awscli
-from python2awscli.error import TooMany
+from python2awscli.error import TooMany, ParseError
 
 
 class BaseVolume(object):
@@ -14,7 +14,7 @@ class BaseVolume(object):
         self.region = region
         self.size = size  # Size in GB
         self.zone = zone
-        self.kind = kind  # standard | io1| gp2| sc1| st1
+        self.kind = kind  # standard | io1| gp2 | sc1| st1
         self.instance = instance
         self.device = device
         if not self._get():
@@ -22,32 +22,29 @@ class BaseVolume(object):
             self._attach()
 
     def _attach(self):
-        timeout = 30
-        while timeout > 0:
-            time.sleep(1)
-            timeout -= 1
-            if timeout < 1:
-                raise TimeoutError
-            command = ['ec2', 'describe-volumes', '--region', self.region]
+        if not self.instance and not self.device:
+            return False
+        if not self.instance or not self.device:
+            raise ParseError('{0}: device and instance are both required, else omit both'.format(self.name))
+        for i in range(30):
+            print('Waiting for volume {0} to be available'.format(self.id))
+            sleep(1)
+            command = ['ec2', 'describe-volumes', '--region', self.region,
+                       '--volume-ids', self.id
+                       ]
             result = awscli(command)['Volumes']
-            if not result:
-                return False  # TODO: raise ImpossibleState(describe returned nothing)
-            for this in result:
-                if this['VolumeId'] == self.id:
-                    if this['State'] == 'available':
-                        if self.instance and self.device:
-                            command = ['ec2', 'attach-volume', '--region', self.region,
-                                       '--volume-id', self.id,
-                                       '--instance-id', self.instance,
-                                       '--device', self.device
-                                       ]
-                            result = awscli(command)
-                            pprint(result)
-                            print('Attach {0}'.format(command))  # TODO: Log(...)
-                            return True
-                    else:
-                        print('Waiting for {0} to be available'.format(self.id))
-        return self.instance
+            if len(result) > 1:
+                raise TooMany('volume._attach() returned more than 1 result. Command={0}'.format(command))
+            if result[0]['State'] == 'available':
+                command = ['ec2', 'attach-volume', '--region', self.region,
+                           '--volume-id', self.id,
+                           '--instance-id', self.instance,
+                           '--device', self.device
+                           ]
+                awscli(command)
+                print('Attached {0}'.format(command))  # TODO: Log(...)
+                return True
+        raise TimeoutError
 
     def _get(self):
         command = ['ec2', 'describe-volumes', '--region', self.region,
