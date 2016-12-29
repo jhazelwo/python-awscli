@@ -1,0 +1,16 @@
+.idea
+__pycache__
+credentials
+.aws
+.bash_history
+.viminfo
+.python_history
+z-test.py
+private
+*.pyc
+*.gz
+*.tar
+*.rpm
+*.zip
+*.exe
+*.pem
