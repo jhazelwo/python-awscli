@@ -17,6 +17,8 @@ def be_string(this):
     if isinstance(this, int):
         return str(this)
     if isinstance(this, list) or isinstance(this, tuple):
+        if len(this) == 1:
+            return this[0]
         s = ''
         for e in this:
             s += str(e)

@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """ -*- coding: utf-8 -*- """
 
 from python2awscli import bin_aws as awscli

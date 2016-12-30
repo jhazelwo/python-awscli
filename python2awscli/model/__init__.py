@@ -1,6 +1,6 @@
 """ -*- coding: utf-8 -*- """
 
-from . import instance, loadbalancer, vpc, securitygroup, keypair, rds, volume, efs
+from . import instance, loadbalancer, vpc, securitygroup, keypair, rds, volume, efs, subnet
 
 
 class Instance(instance.BaseInstance):
@@ -32,4 +32,8 @@ class Volume(volume.BaseVolume):
 
 
 class EFS(efs.BaseEFS):
+    pass
+
+
+class Subnet(subnet.BaseSubnet):
     pass
