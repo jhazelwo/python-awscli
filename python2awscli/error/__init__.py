@@ -4,12 +4,17 @@ import sys
 
 
 class AWSCLIError(Exception):
-    # Generic error when the bin/aws cli exits with a non-zero status.
+    # Generic error when the bin/aws cli exits with a non-zero status
     pass
 
 
 class ParseError(Exception):
     # Failed to parse data
+    pass
+
+
+class MissingArgument(Exception):
+    # A conditionally-required argument is not present
     pass
 
 

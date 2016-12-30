@@ -1,10 +1,9 @@
-#!/usr/bin/env python3
 """ -*- coding: utf-8 -*- """
 from time import sleep
 from pprint import pprint
 
 from python2awscli import bin_aws as awscli
-from python2awscli.error import TooMany, ParseError
+from python2awscli.error import TooMany, MissingArgument
 
 
 class BaseVolume(object):
@@ -25,7 +24,7 @@ class BaseVolume(object):
         if not self.instance and not self.device:
             return False
         if not self.instance or not self.device:
-            raise ParseError('{0}: device and instance are both required, else omit both'.format(self.name))
+            raise MissingArgument('{0}: device and instance are both required, else omit both'.format(self.name))
         for i in range(30):
             print('Waiting for volume {0} to be available'.format(self.id))
             sleep(1)
