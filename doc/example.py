@@ -2,15 +2,22 @@
 """ -*- coding: utf-8 -*- """
 exit()
 
-from python2awscli.model import Instance, LoadBalancer, VPC, SecurityGroup, KeyPair, RDS, Volume
+from python2awscli.model import Instance, LoadBalancer, VPC, SecurityGroup, KeyPair, RDS, Volume, Subnet
 from python2awscli.task import make_ipperms, make_listener
 
 
 REGION = 'us-east-1'
 
 # By default all new SGs are allowed to send anything to anyone.
-default_egress = {'Ipv6Ranges': [], 'PrefixListIds': [], 'IpRanges': [{'CidrIp': '0.0.0.0/0'}],
-                  'UserIdGroupPairs': [], 'IpProtocol': '-1'}
+EGRESS = {'Ipv6Ranges': [], 'PrefixListIds': [], 'IpRanges': [{'CidrIp': '0.0.0.0/0'}], 'UserIdGroupPairs': [],
+          'IpProtocol': '-1'}
+
+vpc_dev = VPC(name='DEV', region=REGION, cidr='10.10.0.0/16', ipv6=False)
+
+my_subnet_a = Subnet(name='app-a', region=REGION, vpc=vpc_dev.id, cidr='10.10.1.0/24', zone='us-west-2a')
+my_subnet_b = Subnet(name='app-b', region=REGION, vpc=vpc_dev.id, cidr='10.10.2.0/24', zone='us-west-2b')
+my_subnet_c = Subnet(name='app-c', region=REGION, vpc=vpc_dev.id, cidr='10.10.3.0/24', zone='us-west-2c')
+
 
 vpc_prod = VPC(
     name='PRODUCTION',
@@ -27,7 +34,7 @@ www_lb_sg = SecurityGroup(
         make_ipperms('0.0.0.0/0:80/tcp'),
         make_ipperms('0.0.0.0/0:443/tcp'),
     ],
-    outbound=default_egress
+    outbound=EGRESS
 )
 
 TIER = 'webservers'
@@ -41,7 +48,7 @@ web_server_security_group = SecurityGroup(
         make_ipperms('{0}/9876543210:80/tcp'.format(www_lb_sg.id)),  # LB
         make_ipperms('sg-b4b3000a/9876543210:22/tcp')                # jump servers
     ],
-    outbound=default_egress
+    outbound=EGRESS
 )
 web_servers = Instance(
     name=TIER,
@@ -88,7 +95,7 @@ db_sg = SecurityGroup(
         'ToPort': 5432,
         'UserIdGroupPairs': []
     },
-    outbound=default_egress
+    outbound=EGRESS
 )
 my_db = RDS(
     name='oursql',
@@ -108,4 +115,4 @@ for this in web_servers.id:
         kind='gp2', size='1000', instance=this, device='/dev/xvdd'
     )
 
-# This example OK as of d819acbe1e3a10c45203e3ee2a308e353e27adff
+# This example OK as of 5b9fcabc764e07e9297b67bd33e59fcb1028214b
