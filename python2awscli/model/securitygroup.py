@@ -120,7 +120,7 @@ class BaseSecurityGroup(object):
         :return: Bool
         """
         command = ['ec2', 'describe-security-groups', '--region', self.region, '--group-names', self.name]
-        result = awscli(command, result_limit=1)  # will raise NotFound if empty
+        result = awscli(command, max=1)  # will raise NotFound if empty
         security_groups = result['SecurityGroups'][0]
         self.id = security_groups['GroupId']
         self.owner = security_groups['OwnerId']

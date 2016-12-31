@@ -22,13 +22,13 @@ class BaseVPC(object):
                    '--filter',
                    'Name=resource-type,Values=vpc',
                    'Name=value,Values={0}'.format(self.name)]
-        result = bin_aws(command, key='Tags', result_limit=1)
+        result = bin_aws(command, key='Tags', max=1)
         if not result:
             return False
         self.id = result[0]['ResourceId']
         command = ['ec2', 'describe-vpcs', '--region', self.region,
                    '--vpc-ids', self.id]
-        result = bin_aws(command, key='Vpcs', result_limit=1)
+        result = bin_aws(command, key='Vpcs', max=1)
         self.cidr = result[0]['CidrBlock']
         self.id = result[0]['VpcId']
         if 'Ipv6CidrBlockAssociationSet' in result[0]:

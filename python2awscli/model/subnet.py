@@ -24,7 +24,7 @@ class BaseSubnet(object):
             command.append('Name=cidrBlock,Values={0}'.format(self.cidr))  # Prefer to search by CIDR
         else:
             command.append('Name=tag:Name,Values={0}'.format(self.name))  # Else by name if User doesnt know the CIDR
-        result = bin_aws(command, key='Subnets', result_limit=1)
+        result = bin_aws(command, key='Subnets', max=1)
         if not result:
             return False
         print('Got {0}'.format(command))  # TODO: Log(...)

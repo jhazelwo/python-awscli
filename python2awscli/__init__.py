@@ -7,7 +7,7 @@ from python2awscli.error import AWSDuplicate, AWSNotFound, AWSCLIError, TooMany
 VERSION = "0.a"
 
 
-def bin_aws(arguments, timeout=30, decode_output=True, result_limit=0, key=None):
+def bin_aws(arguments, timeout=30, decode_output=True, max=0, key=None):
     """
     Run /usr/local/bin/aws as current user, kill process if running for more than 'timeout' seconds.
 
@@ -17,7 +17,7 @@ def bin_aws(arguments, timeout=30, decode_output=True, result_limit=0, key=None)
     :param arguments: List of strings to append to bin/aws
     :param timeout: Int, max TTL of command execution
     :param decode_output: Bool, whether to json-decode STDOUT, default is True because most bin/aws output is json.
-    :param result_limit: Int (0=unlimited) raise error if number of valid elements returned from command is greater
+    :param max: Int (0=unlimited) raise error if number of valid elements returned from command is greater
     :param key: Str, return d[key] instead of d
     :return:
     """
@@ -45,8 +45,8 @@ def bin_aws(arguments, timeout=30, decode_output=True, result_limit=0, key=None)
                 d = json.loads(standard_out)
                 if key:
                     d = d[key]
-                if result_limit and len(d) > result_limit:
-                    raise TooMany('More than {0} results returned for command {1}'.format(result_limit, arguments))
+                if max and len(d) > max:
+                    raise TooMany('More than {0} results returned for command {1}'.format(max, arguments))
             except json.decoder.JSONDecodeError:
                 print('Contact Dev, failed to decode STDOUT "{0}"'.format(standard_out))
                 raise

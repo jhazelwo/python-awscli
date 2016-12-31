@@ -30,7 +30,7 @@ class BaseVolume(object):
             command = ['ec2', 'describe-volumes', '--region', self.region,
                        '--volume-ids', self.id
                        ]
-            result = awscli(command, key='Volumes', result_limit=1)
+            result = awscli(command, key='Volumes', max=1)
             if result[0]['State'] == 'available':
                 command = ['ec2', 'attach-volume', '--region', self.region,
                            '--volume-id', self.id,
@@ -48,7 +48,7 @@ class BaseVolume(object):
                    'Name=attachment.device,Values={0}'.format(self.device),
                    'Name=attachment.instance-id,Values={0}'.format(self.instance),
                    ]
-        result = awscli(command, key='Volumes', result_limit=1)
+        result = awscli(command, key='Volumes', max=1)
         if not result:
             return False
         self.id = result[0]['VolumeId']

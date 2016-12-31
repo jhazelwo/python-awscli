@@ -24,7 +24,7 @@ class BaseEFS(object):
         for i in range(30):
             command = ['efs', 'describe-file-systems', '--region', self.region,
                        '--creation-token', self.token]
-            file_systems = bin_aws(command, key='FileSystems', result_limit=1)
+            file_systems = bin_aws(command, key='FileSystems', max=1)
             if file_systems[0]['LifeCycleState'] == 'available':
                 command = ['efs', 'describe-mount-targets', '--region', self.region,
                            '--file-system-id', self.id]
@@ -65,7 +65,7 @@ class BaseEFS(object):
         command = ['efs', 'describe-file-systems', '--region', self.region,
                    '--creation-token', self.token
                    ]
-        file_systems = bin_aws(command, key='FileSystems', result_limit=1)
+        file_systems = bin_aws(command, key='FileSystems', max=1)
         if not file_systems:
             return False
         self.id = file_systems[0]['FileSystemId']
