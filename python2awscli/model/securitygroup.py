@@ -2,7 +2,7 @@
 from pprint import pprint
 
 from python2awscli import bin_aws as awscli
-from python2awscli.error import AWSNotFound, ParseError, AWSDuplicate, TooMany
+from python2awscli.error import AWSNotFound, ParseError, AWSDuplicate
 from python2awscli import must
 
 
@@ -120,10 +120,7 @@ class BaseSecurityGroup(object):
         :return: Bool
         """
         command = ['ec2', 'describe-security-groups', '--region', self.region, '--group-names', self.name]
-        result = awscli(command)
-        size = len(result['SecurityGroups'])
-        if size != 1:
-            raise TooMany('Command {0} expected 1 result, got {1}'.format(command, size))
+        result = awscli(command, result_limit=1)  # will raise NotFound if empty
         security_groups = result['SecurityGroups'][0]
         self.id = security_groups['GroupId']
         self.owner = security_groups['OwnerId']

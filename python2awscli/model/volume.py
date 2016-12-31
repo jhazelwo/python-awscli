@@ -1,9 +1,8 @@
 """ -*- coding: utf-8 -*- """
 from time import sleep
-from pprint import pprint
 
 from python2awscli import bin_aws as awscli
-from python2awscli.error import TooMany, MissingArgument
+from python2awscli.error import MissingArgument
 
 
 class BaseVolume(object):
@@ -31,9 +30,7 @@ class BaseVolume(object):
             command = ['ec2', 'describe-volumes', '--region', self.region,
                        '--volume-ids', self.id
                        ]
-            result = awscli(command)['Volumes']
-            if len(result) > 1:
-                raise TooMany('volume._attach() returned more than 1 result. Command={0}'.format(command))
+            result = awscli(command, key='Volumes', result_limit=1)
             if result[0]['State'] == 'available':
                 command = ['ec2', 'attach-volume', '--region', self.region,
                            '--volume-id', self.id,
@@ -51,11 +48,9 @@ class BaseVolume(object):
                    'Name=attachment.device,Values={0}'.format(self.device),
                    'Name=attachment.instance-id,Values={0}'.format(self.instance),
                    ]
-        result = awscli(command)['Volumes']
+        result = awscli(command, key='Volumes', result_limit=1)
         if not result:
             return False
-        if len(result) > 1:
-            raise TooMany('volume._get() returned more than 1 result. Command={0}'.format(command))
         self.id = result[0]['VolumeId']
         print('Got {0}'.format(command))  # TODO: Log(...)
         return True

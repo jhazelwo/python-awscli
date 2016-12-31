@@ -1,6 +1,6 @@
 """ -*- coding: utf-8 -*- """
 from python2awscli import bin_aws
-from python2awscli.error import TooMany, MissingArgument
+from python2awscli.error import MissingArgument
 from python2awscli import must
 
 
@@ -24,11 +24,9 @@ class BaseSubnet(object):
             command.append('Name=cidrBlock,Values={0}'.format(self.cidr))  # Prefer to search by CIDR
         else:
             command.append('Name=tag:Name,Values={0}'.format(self.name))  # Else by name if User doesnt know the CIDR
-        result = bin_aws(command)['Subnets']
+        result = bin_aws(command, key='Subnets', result_limit=1)
         if not result:
             return False
-        if len(result) > 1:
-            raise TooMany('More than 1 result returned from command {0}'.format(command))
         print('Got {0}'.format(command))  # TODO: Log(...)
         self.id = result[0]['SubnetId']
         self.zone = result[0]['AvailabilityZone']

@@ -1,9 +1,7 @@
 """ -*- coding: utf-8 -*- """
 import uuid
 from time import sleep
-from pprint import pprint
 
-from python2awscli.error import TooMany
 from python2awscli import bin_aws
 from python2awscli import must
 
@@ -26,13 +24,11 @@ class BaseEFS(object):
         for i in range(30):
             command = ['efs', 'describe-file-systems', '--region', self.region,
                        '--creation-token', self.token]
-            file_systems = bin_aws(command)['FileSystems']
-            if len(file_systems) > 1:
-                raise TooMany('efs._mounts() returned more than 1 result. Command={0}'.format(command))
+            file_systems = bin_aws(command, key='FileSystems', result_limit=1)
             if file_systems[0]['LifeCycleState'] == 'available':
                 command = ['efs', 'describe-mount-targets', '--region', self.region,
                            '--file-system-id', self.id]
-                mount_targets = bin_aws(command)['MountTargets']
+                mount_targets = bin_aws(command, key='MountTargets')
                 for this in self.subnets:
                     if not must.find.dict_in_list(key='SubnetId', needle=this, haystack=mount_targets):
                         command = ['efs', 'create-mount-target', '--region', self.region,
@@ -69,9 +65,9 @@ class BaseEFS(object):
         command = ['efs', 'describe-file-systems', '--region', self.region,
                    '--creation-token', self.token
                    ]
-        result = bin_aws(command)['FileSystems']
-        if not result:
+        file_systems = bin_aws(command, key='FileSystems', result_limit=1)
+        if not file_systems:
             return False
-        self.id = result[0]['FileSystemId']
+        self.id = file_systems[0]['FileSystemId']
         print('Got {0}'.format(command))  # TODO: Log(...)
         return True

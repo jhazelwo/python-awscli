@@ -7,5 +7,4 @@ can run this code already has full access to the bin/aws program. We
 let AWS's code and permission structure do the real work.
 
 ## TODO
-* `aws efs create-file-system`
-* `aws efs create-mount-target`
+* pass

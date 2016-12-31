@@ -1,7 +1,6 @@
 """ -*- coding: utf-8 -*- """
 
-from python2awscli import bin_aws as awscli
-from python2awscli.error import TooMany
+from python2awscli import bin_aws
 
 
 class BaseVPC(object):
@@ -23,17 +22,13 @@ class BaseVPC(object):
                    '--filter',
                    'Name=resource-type,Values=vpc',
                    'Name=value,Values={0}'.format(self.name)]
-        result = awscli(command)['Tags']
+        result = bin_aws(command, key='Tags', result_limit=1)
         if not result:
             return False
-        if len(result) > 1:
-            raise TooMany('More than 1 VPC named {0} found!'.format(self.name))
         self.id = result[0]['ResourceId']
         command = ['ec2', 'describe-vpcs', '--region', self.region,
                    '--vpc-ids', self.id]
-        result = awscli(command)['Vpcs']
-        if len(result) > 1:
-            raise TooMany('More than 1 VPC named {0} found!'.format(self.name))
+        result = bin_aws(command, key='Vpcs', result_limit=1)
         self.cidr = result[0]['CidrBlock']
         self.id = result[0]['VpcId']
         if 'Ipv6CidrBlockAssociationSet' in result[0]:
@@ -59,7 +54,7 @@ class BaseVPC(object):
                    ]
         if self.ipv6:
             command.append('--amazon-provided-ipv6-cidr-block')
-        result = awscli(command)
+        result = bin_aws(command)
         print('Created {0}'.format(command))  # TODO: Log(...)
         self.id = result['Vpc']['VpcId']
         command = ['ec2', 'create-tags',
@@ -67,6 +62,6 @@ class BaseVPC(object):
                    '--resources', self.id,
                    '--tags', 'Key=Name,Value={0}'.format(self.name)
                    ]
-        awscli(command)
+        bin_aws(command, decode_output=False)
         print('Named {0}'.format(command))  # TODO: Log(...)
         return True
