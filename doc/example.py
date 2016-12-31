@@ -2,7 +2,7 @@
 """ -*- coding: utf-8 -*- """
 exit()
 
-from python2awscli.model import Instance, LoadBalancer, VPC, SecurityGroup, KeyPair, RDS, Volume, Subnet
+from python2awscli.model import Instance, LoadBalancer, VPC, SecurityGroup, KeyPair, RDS, Volume, Subnet, EFS
 from python2awscli.task import make_ipperms, make_listener
 
 
@@ -18,6 +18,15 @@ my_subnet_a = Subnet(name='app-a', region=REGION, vpc=vpc_dev.id, cidr='10.10.1.
 my_subnet_b = Subnet(name='app-b', region=REGION, vpc=vpc_dev.id, cidr='10.10.2.0/24', zone='us-west-2b')
 my_subnet_c = Subnet(name='app-c', region=REGION, vpc=vpc_dev.id, cidr='10.10.3.0/24', zone='us-west-2c')
 
+
+sg_nfs = SecurityGroup(name='nfs', region=REGION, vpc=vpc_dev.id,
+                       description='NFS',
+                       inbound=make_ipperms('{0}:2049/tcp'.format(vpc_dev.cidr)),
+                       outbound=EGRESS)
+
+mount = EFS(name='appservers:/app/etc', region=REGION, kind='maxIO',
+            subnets=[my_subnet_a.id, my_subnet_b.id, my_subnet_c.id],
+            groups=sg_nfs.id)
 
 vpc_prod = VPC(
     name='PRODUCTION',
