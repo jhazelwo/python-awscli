@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
-""" -*- coding: utf-8 -*- """
+""" -*- coding: utf-8 -*-
+This example OK as of cea59e92a2e53167715e2516cb6583cec4e7e12e
+"""
 exit()
 
 from python2awscli.model import Instance, LoadBalancer, VPC, SecurityGroup, KeyPair, RDS, Volume, Subnet, EFS
@@ -123,5 +125,3 @@ for this in web_servers.id:
         name='webserver-data', region=REGION, zone=web_servers.zone,
         kind='gp2', size='1000', instance=this, device='/dev/xvdd'
     )
-
-# This example OK as of 5b9fcabc764e07e9297b67bd33e59fcb1028214b
