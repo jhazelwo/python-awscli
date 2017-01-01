@@ -1,4 +1,6 @@
 """ -*- coding: utf-8 -*- """
+from pprint import pprint
+
 from python2awscli import bin_aws as awscli
 from python2awscli.error import TooMany
 from python2awscli import must
@@ -21,7 +23,7 @@ class BaseInstance(object):
         self.private_ips = set()
         self.public = public
         self.script = script
-        self.zone = None  # AV Zone
+        self.zones = set()
         if not self._get():
             self._create()
             self._get()
@@ -77,7 +79,7 @@ class BaseInstance(object):
             all_instances.extend(this['Instances'])
         for this in all_instances:
             if this['State']['Code'] in [0, 16]:  # "Pending, Running"
-                self.zone = this['Placement']['AvailabilityZone']
+                self.zones.add(this['Placement']['AvailabilityZone'])
                 self.id.add(this['InstanceId'])
                 if 'PrivateIpAddress' in this:
                     self.private_ips.add(this['PrivateIpAddress'])

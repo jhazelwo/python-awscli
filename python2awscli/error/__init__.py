@@ -34,7 +34,7 @@ class AWSDuplicate(Exception):
 
 
 def quiet_hook(kind, message, traceback):
-    if kind in [AWSCLIError, ParseError, TooMany, AWSNotFound, AWSDuplicate]:
+    if kind in [AWSCLIError, ParseError, TooMany, AWSNotFound, AWSDuplicate, MissingArgument]:
         print('{0}: {1}'.format(kind.__name__, message))
     else:
         sys.__excepthook__(kind, message, traceback)

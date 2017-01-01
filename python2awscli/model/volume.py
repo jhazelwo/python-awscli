@@ -6,12 +6,12 @@ from python2awscli.error import MissingArgument
 
 
 class BaseVolume(object):
-    def __init__(self, name, region, size, zone, instance=None, device=None, kind='standard'):
+    def __init__(self, name, region, size, zone=None, instance=None, device=None, kind='standard'):
         self.id = None
         self.name = name
         self.region = region
         self.size = size  # Size in GB
-        self.zone = zone
+        self.zone = zone  # Required if instance is not set
         self.kind = kind  # standard | io1| gp2 | sc1| st1
         self.instance = instance
         self.device = device
@@ -84,6 +84,8 @@ class BaseVolume(object):
             reservations = awscli(command, key='Reservations')
             # Force correct AZ
             self.zone = reservations[0]['Instances'][0]['Placement']['AvailabilityZone']
+        if not self.zone:
+            raise MissingArgument('{0}: param "zone" required if "instance" not provided'.format(self.name))
         command = ['ec2', 'create-volume', '--region', self.region,
                    '--size', self.size,
                    '--volume-type', self.kind,
