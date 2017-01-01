@@ -7,7 +7,7 @@ can run this code already has full access to the bin/aws program. We
 let AWS's code and permission structure do the real work.
 
 ## Usage
-* Full examples in __doc/example.py__
+* Full examples in [doc/example.py](https://github.com/jhazelwo/python-awscli/blob/master/doc/example.py)
 * Some brief examples:
 
 ```
