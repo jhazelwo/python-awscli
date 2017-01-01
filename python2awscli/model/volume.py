@@ -24,24 +24,44 @@ class BaseVolume(object):
             return False
         if not self.instance or not self.device:
             raise MissingArgument('{0}: device and instance are both required, else omit both'.format(self.name))
+        self._wait_for_volume()
+        self._wait_for_instance()
+        command = ['ec2', 'attach-volume', '--region', self.region,
+                   '--volume-id', self.id,
+                   '--instance-id', self.instance,
+                   '--device', self.device
+                   ]
+        awscli(command)
+        print('Attached {0}'.format(command))  # TODO: Log(...)
+
+    def _wait_for_volume(self):
         for i in range(30):
-            print('Waiting for volume {0} to be available'.format(self.id))
             sleep(1)
             command = ['ec2', 'describe-volumes', '--region', self.region,
                        '--volume-ids', self.id
                        ]
-            result = awscli(command, key='Volumes', max=1)
-            # TODO An error occurred (IncorrectState) when calling the AttachVolume operation:
-            # TODO Instance 'i-0000000000000000' is not 'running'.
-            if result[0]['State'] == 'available':
-                command = ['ec2', 'attach-volume', '--region', self.region,
-                           '--volume-id', self.id,
-                           '--instance-id', self.instance,
-                           '--device', self.device
-                           ]
-                awscli(command)
-                print('Attached {0}'.format(command))  # TODO: Log(...)
+            volumes = awscli(command, key='Volumes', max=1)
+            if volumes[0]['State'] == 'available':
                 return True
+            else:
+                print('Waiting for volume {0} to be available'.format(self.id))
+        raise TimeoutError
+
+    def _wait_for_instance(self):
+        for i in range(30):
+            command = ['ec2', 'describe-instances', '--region', self.region,
+                       '--instance-ids', self.instance]
+            reservations = awscli(command, key='Reservations')
+            instances = reservations[0]['Instances']
+            state = instances[0]['State']
+            if state['Code'] == 0:  # Pending
+                print('Waiting for instance {0} to be available'.format(self.instance))
+                sleep(2)
+            elif state['Code'] == 16:  # Running
+                return True
+            else:
+                print('Instance {0} in unexpected state {1}'.format(self.instance, state['Name']))
+                sleep(1)
         raise TimeoutError
 
     def _get(self):
@@ -58,6 +78,12 @@ class BaseVolume(object):
         return True
 
     def _create(self):
+        if self.instance:
+            command = ['ec2', 'describe-instances', '--region', self.region,
+                       '--instance-ids', self.instance]
+            reservations = awscli(command, key='Reservations')
+            # Force correct AZ
+            self.zone = reservations[0]['Instances'][0]['Placement']['AvailabilityZone']
         command = ['ec2', 'create-volume', '--region', self.region,
                    '--size', self.size,
                    '--volume-type', self.kind,
