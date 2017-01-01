@@ -31,6 +31,8 @@ class BaseVolume(object):
                        '--volume-ids', self.id
                        ]
             result = awscli(command, key='Volumes', max=1)
+            # TODO An error occurred (IncorrectState) when calling the AttachVolume operation:
+            # TODO Instance 'i-0000000000000000' is not 'running'.
             if result[0]['State'] == 'available':
                 command = ['ec2', 'attach-volume', '--region', self.region,
                            '--volume-id', self.id,
