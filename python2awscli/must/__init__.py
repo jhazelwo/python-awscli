@@ -32,7 +32,7 @@ def be_list(this):
         return []
     if isinstance(this, list):
         return this
-    if isinstance(this, tuple):
+    if isinstance(this, tuple) or isinstance(this, set):
         return list(this)
     if isinstance(this, str) or isinstance(this, int) or isinstance(this, dict):
         return [this]
@@ -40,7 +40,7 @@ def be_list(this):
 
 
 def be_dict(this):
-    # Best effort to turn 'this' in a dict
+    # Best effort to turn 'this' into a dict
     if isinstance(this, dict):
         return this
     if isinstance(this, str):
@@ -54,9 +54,16 @@ def be_dict(this):
 
 
 def be_int(this):
-    # Best effort to turn 'this' in an int
+    # Best effort to turn 'this' into an int
     if isinstance(this, int):
         return this
     if isinstance(this, str):
         return int(this)
     raise TypeError('Cannot convert {0}:{1} to int'.format(type(this), this))
+
+
+def be_set(this):
+    # Best effort to turn 'this' into a set()
+    if isinstance(this, tuple) or isinstance(this, list):
+        return set(this)
+    raise TypeError('Cannot convert {0}:{1} to set'.format(type(this), this))

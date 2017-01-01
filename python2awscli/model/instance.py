@@ -15,10 +15,10 @@ class BaseInstance(object):
         self.deficit = 0  # Should always be negative inventory (requested - running)
         self.size = size  # --instance-type
         self.groups = must.be_list(groups)  # --security-group-ids
-        self.id = []
-        self.subnets = []
-        self.public_ips = []
-        self.private_ips = []
+        self.id = set()
+        self.subnets = set()
+        self.public_ips = set()
+        self.private_ips = set()
         self.public = public
         self.script = script
         self.zone = None  # AV Zone
@@ -43,19 +43,16 @@ class BaseInstance(object):
         if self.script:
             command.append('--user-data')
             command.append('file://{0}'.format(self.script))
-        result = awscli(command)
+        instances = awscli(command, key='Instances')
         print('Created {0}'.format(command))  # TODO: Log(...)
-        instances = result['Instances']
         for this in instances:
-            this_id = this['InstanceId']
-            if this_id not in self.id:
-                self.id.append(this_id)
+            self.id.add(this['InstanceId'])
             command = ['ec2', 'create-tags',
                        '--region', self.region,
-                       '--resources', this_id,
+                       '--resources', this['InstanceId'],
                        '--tags', 'Key=Name,Value={0}'.format(self.name)
                        ]
-            awscli(command)
+            awscli(command, decode_output=False)
             print('Named {0}'.format(command))  # TODO: Log(...)
         self.deficit = 0
         return True
@@ -74,21 +71,20 @@ class BaseInstance(object):
                    '--instance-ids']
         for this in result:
             command.append(this['ResourceId'])
-        result = awscli(command)['Reservations']
+        reservations = awscli(command, key='Reservations')
         all_instances = []  # Will become list() of ALL instances (even terminated) as dict()s
-        for this in result:  # Extract Instances from each Reservation and merge them into a list()
+        for this in reservations:  # Extract Instances from each Reservation and merge them into a list()
             all_instances.extend(this['Instances'])
         for this in all_instances:
             if this['State']['Code'] in [0, 16]:  # "Pending, Running"
                 self.zone = this['Placement']['AvailabilityZone']
-                if this['InstanceId'] not in self.id:
-                    self.id.append(this['InstanceId'])
-                if 'PrivateIpAddress' in this and this['PrivateIpAddress'] not in self.private_ips:
-                    self.private_ips.append(this['PrivateIpAddress'])
-                if 'PublicIpAddress' in this and this['PublicIpAddress'] not in self.public_ips:
-                    self.public_ips.append(this['PublicIpAddress'])
-                if 'SubnetId' in this and this['SubnetId'] not in self.subnets:
-                    self.subnets.append(this['SubnetId'])
+                self.id.add(this['InstanceId'])
+                if 'PrivateIpAddress' in this:
+                    self.private_ips.add(this['PrivateIpAddress'])
+                if 'PublicIpAddress' in this:
+                    self.public_ips.add(this['PublicIpAddress'])
+                if 'SubnetId' in this:
+                    self.subnets.add(this['SubnetId'])
         running_count = len(self.id)
         need_running = self.count
         if running_count != need_running:
