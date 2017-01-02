@@ -1,28 +1,30 @@
 #!/usr/bin/env python3
 """ -*- coding: utf-8 -*-
-OK as of 2cdca9337110aa69ebdf43be8926ba42286b4640
+OK as of 05a48a96731d4ee544cdc9c262d04b5b56299816
 
-This code will:
+This code shows how to:
     Set up a new VPC with 3 subnets.
     Create a NFS (EFS) mount available in those subnets
     Create a web load balancer, keypair, 1 running instance
     Create a small pgSQL RDS instance
     Create security groups for all resources to allow correct public, private and neighbor access.
     Create and attach a 1000gb data volume to the webserver instance.
+    Create instances in the same tier across different availability zones
 
 All methods check for existing resources before creation to prevent duplicates.
 
 No methods currently exist that stop, destroy, delete or decommission resources.
+    "Idempotent minus removal"
 """
 from python2awscli.model import Instance, LoadBalancer, VPC, SecurityGroup, KeyPair, RDS, Volume, Subnet, EFS
 from python2awscli.task import make_ipperms, make_listener
 
 
 REGION = 'us-east-1'
-
-# By default all new SGs are allowed to send anything to anyone.
+IMAGE = 'ami-b7a114d7'  # Ubuntu Server 16.04 LTS (HVM), SSD Volume Type
 EGRESS = {'Ipv6Ranges': [], 'PrefixListIds': [], 'IpRanges': [{'CidrIp': '0.0.0.0/0'}], 'UserIdGroupPairs': [],
-          'IpProtocol': '-1'}
+          'IpProtocol': '-1'}  # This is the default egress rule for security groups
+
 
 vpc_dev = VPC(name='DEV', region=REGION, cidr='10.10.0.0/16', ipv6=False)
 
@@ -65,12 +67,12 @@ web_server_security_group = SecurityGroup(
     ],
     outbound=EGRESS
 )
-# Create {count} number of instances
+# Create {count} number of instances, let AWS pick AZ
 web_servers = Instance(
     name=TIER,
     region=REGION,
     vpc=vpc_dev.id,
-    image='ami-b7a114d7',  # Ubuntu Server 16.04 LTS (HVM), SSD Volume Type
+    image=IMAGE,
     key=web_servers_key_pair.name,
     count=1,
     size='t2.micro',
@@ -84,8 +86,7 @@ for this in web_servers.id:
         name='webserver-data', region=REGION, zone=web_servers.zone,
         kind='gp2', size='1000', instance=this, device='/dev/xvdd'
     )
-
-
+# Standard LB with AWS-provided cert.
 www_lb = LoadBalancer(
     name='www',
     region=REGION,
@@ -101,7 +102,7 @@ www_lb = LoadBalancer(
     groups=www_lb_sg.id,
     instances=web_servers.id
 )
-
+#
 db_sg = SecurityGroup(
     name='db',
     region=REGION,
@@ -111,7 +112,7 @@ db_sg = SecurityGroup(
         'FromPort': 5432,
         'IpProtocol': 'tcp',
         'IpRanges': [
-            {'CidrIp': '8.8.8.8/32'},    # HOME
+            {'CidrIp': '8.8.8.8/32'},     # HOME
             {'CidrIp': '10.10.0.0/16'}],  # DEV VPC
         'Ipv6Ranges': [],
         'PrefixListIds': [],
@@ -120,6 +121,7 @@ db_sg = SecurityGroup(
     },
     outbound=EGRESS
 )
+# A small pgSQL instance
 my_db = RDS(
     name='oursql',
     region=REGION,
@@ -131,4 +133,44 @@ my_db = RDS(
     zone='us-west-2a',
     groups=[db_sg.id],
     public=True
+)
+# Create 1 server in each AZ
+web_servers_a = Instance(
+    name='webservers-az',
+    region=REGION,
+    vpc=vpc_dev.id,
+    image=IMAGE,
+    key=web_servers_key_pair.name,
+    count=1,
+    size='t2.micro',
+    groups=web_server_security_group.id,
+    public=True,
+    script='/aws/private/user-data.sh',
+    zone='us-west-2a',
+)
+web_servers_b = Instance(
+    name='webservers-az',
+    region=REGION,
+    vpc=vpc_dev.id,
+    image=IMAGE,
+    key=web_servers_key_pair.name,
+    count=1,
+    size='t2.micro',
+    groups=web_server_security_group.id,
+    public=True,
+    script='/aws/private/user-data.sh',
+    zone='us-west-2b',
+)
+web_servers_c = Instance(
+    name='webservers-az',
+    region=REGION,
+    vpc=vpc_dev.id,
+    image=IMAGE,
+    key=web_servers_key_pair.name,
+    count=1,
+    size='t2.micro',
+    groups=web_server_security_group.id,
+    public=True,
+    script='/aws/private/user-data.sh',
+    zone='us-west-2c',
 )
