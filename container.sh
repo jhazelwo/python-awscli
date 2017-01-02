@@ -8,6 +8,7 @@ build_rm="--force-rm=true"
 volumes="-v /home/human/dev/python-awscli:/aws -v /home/human/.aws:/aws/home/.aws"
 with_tty="--tty"
 with_interact="--interactive"
+build_context="$(dirname $0)/docker/"
 
 usage() {
     echo ""
@@ -19,7 +20,7 @@ usage() {
 
 do_build() {
     echo "build $1"
-    docker build $build_rm --tag=${image_name} "$(dirname $0)/docker/"
+    docker build $build_rm --tag=${image_name} ${build_context}
     [ $? -eq 0 -a please_$1 = please_clean ] && {
         for this in `/usr/bin/docker images |grep '<none>'|awk '{print $3}'`; do
             /usr/bin/docker rmi $this
