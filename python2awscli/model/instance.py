@@ -2,12 +2,13 @@
 from pprint import pprint
 
 from python2awscli import bin_aws as awscli
-from python2awscli.error import TooMany
+from python2awscli.error import TooMany, AWSNotFound
 from python2awscli import must
 
 
+
 class BaseInstance(object):
-    def __init__(self, name, region, vpc, image, key, count, size, groups, public=True, script=None):
+    def __init__(self, name, region, vpc, image, key, count, size, groups, zone=None, public=True, script=None):
         self.name = name
         self.region = region
         self.vpc = vpc
@@ -24,6 +25,7 @@ class BaseInstance(object):
         self.public = public
         self.script = script
         self.zones = set()
+        self.zone = zone  # AZ to use during _create()
         if not self._get():
             self._create()
             self._get()
@@ -42,6 +44,14 @@ class BaseInstance(object):
         command.extend(self.groups)
         if not self.public:
             command.append('--no-associate-public-ip-address')
+        if self.zone:
+            placement = {
+                "AvailabilityZone": self.zone,
+                "GroupName": "",
+                "Tenancy": "default",
+            }
+            command.append('--placement')
+            command.append(str(placement).replace("'", '"'))
         if self.script:
             command.append('--user-data')
             command.append('file://{0}'.format(self.script))
@@ -73,20 +83,26 @@ class BaseInstance(object):
                    '--instance-ids']
         for this in result:
             command.append(this['ResourceId'])
+        # This does not filter the way we expected it to.
+        # It looks like if any of the instance Ids are not all placed in self.zone then NotFound is raised for all.
+        # if self.zone:
+        #     command.append('--filter',)
+        #     command.append('Name=availability-zone,Values={0}'.format(self.zone))
         reservations = awscli(command, key='Reservations')
         all_instances = []  # Will become list() of ALL instances (even terminated) as dict()s
         for this in reservations:  # Extract Instances from each Reservation and merge them into a list()
             all_instances.extend(this['Instances'])
         for this in all_instances:
             if this['State']['Code'] in [0, 16]:  # "Pending, Running"
-                self.zones.add(this['Placement']['AvailabilityZone'])
-                self.id.add(this['InstanceId'])
-                if 'PrivateIpAddress' in this:
-                    self.private_ips.add(this['PrivateIpAddress'])
-                if 'PublicIpAddress' in this:
-                    self.public_ips.add(this['PublicIpAddress'])
-                if 'SubnetId' in this:
-                    self.subnets.add(this['SubnetId'])
+                if self.zone is None or self.zone == this['Placement']['AvailabilityZone']:
+                    self.zones.add(this['Placement']['AvailabilityZone'])
+                    self.id.add(this['InstanceId'])
+                    if 'PrivateIpAddress' in this:
+                        self.private_ips.add(this['PrivateIpAddress'])
+                    if 'PublicIpAddress' in this:
+                        self.public_ips.add(this['PublicIpAddress'])
+                    if 'SubnetId' in this:
+                        self.subnets.add(this['SubnetId'])
         running_count = len(self.id)
         need_running = self.count
         if running_count != need_running:
