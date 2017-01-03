@@ -38,6 +38,4 @@ for this in web_servers.id:
 ```
 
 ## TODO
-* Instance(placement)
 * Casual code clean-ups
-* Waiting for new use case
