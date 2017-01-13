@@ -36,6 +36,8 @@ class BaseLoadBalancer(object):
             self._get()
         except AWSNotFound:
             self._create(zones, groups, scheme, listeners)
+        if self.groups != groups:
+            self._groups(groups)
         merge_elements(listeners, self.listeners, self._add_listener, self._rm_listener)
         merge_elements(zones, self.zones, self._add_zone, self._rm_zone, add_first=True)
         merge_elements(instances, self.instances, self._add_instance, self._rm_instance)
@@ -155,8 +157,7 @@ class BaseLoadBalancer(object):
                    '--load-balancer-name', self.name,
                    '--instances']
         command.extend(instances)
-        result = awscli(command)
-        print(result)
+        awscli(command, decode_output=False)
         print('Attached {0}'.format(command))  # TODO: Log(...)
 
     def _detach(self, instances):
@@ -166,6 +167,14 @@ class BaseLoadBalancer(object):
                    '--load-balancer-name', self.name,
                    '--instances']
         command.extend(instances)
-        result = awscli(command)
-        print(result)
+        awscli(command, decode_output=False)
         print('Detached {0}'.format(command))  # TODO: Log(...)
+
+    def _groups(self, groups):
+        command = ['elb', 'apply-security-groups-to-load-balancer', '--region', self.region,
+                   '--load-balancer-name', self.name,
+                   '--security-groups'
+                   ]
+        command.extend(groups)
+        awscli(command, decode_output=False)
+        print('Applied {0}'.format(command))  # TODO: Log(...)
