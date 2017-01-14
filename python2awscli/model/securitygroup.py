@@ -24,16 +24,35 @@ class BaseSecurityGroup(object):
         self.IpPermissions = []
         self.IpPermissionsEgress = []
         self.owner = None
+        self.changed = False
         try:
             self._get()
         except AWSNotFound:
             self._create()
+        self._merge_rules(must.be_list(inbound), self.IpPermissions)
+        self._merge_rules(must.be_list(outbound), self.IpPermissionsEgress, egress=True)
+        if self.changed:
             self._get()
-        inbound = must.be_list(inbound)
-        outbound = must.be_list(outbound)
-        self._merge_rules(inbound, self.IpPermissions)
-        self._merge_rules(outbound, self.IpPermissionsEgress, egress=True)
-        # self._get()  # RFC: disabled to help speed, merge_rules updates self.IpPermissions[Egress]
+
+    def _break_out(self, existing):
+        """
+        Undo AWS's rule flattening so we can do simple 'if rule in existing' logic later.
+        :param existing: List of SG rules as dicts.
+        :return: List of SG rules as dicts.
+        """
+        spool = list()
+        for rule in existing:
+            for ip in rule['IpRanges']:
+                copy_of_rule = rule.copy()
+                copy_of_rule['IpRanges'] = [ip]
+                copy_of_rule['UserIdGroupPairs'] = []
+                spool.append(copy_of_rule)
+            for group in rule['UserIdGroupPairs']:
+                copy_of_rule = rule.copy()
+                copy_of_rule['IpRanges'] = []
+                copy_of_rule['UserIdGroupPairs'] = [group]
+                spool.append(copy_of_rule)
+        return spool
 
     def _merge_rules(self, requested, active, egress=False):
         """
@@ -60,9 +79,7 @@ class BaseSecurityGroup(object):
         :return: Bool
         """
         direction = 'authorize-security-group-ingress'
-        subject = self.IpPermissions
         if egress:
-            subject = self.IpPermissionsEgress
             direction = 'authorize-security-group-egress'
         command = ['ec2', direction,
                    '--region', self.region,
@@ -70,8 +87,8 @@ class BaseSecurityGroup(object):
                    '--ip-permissions', str(ip_permissions).replace("'", '"')
                    ]
         awscli(command)
-        subject.append(ip_permissions)  # RFC: This is here for speed, should we use another _get() ?
         print('Authorized: {0}'.format(ip_permissions))  # TODO: Log(...)
+        self.changed = True
         return True
 
     def _rm_rule(self, ip_permissions, egress):
@@ -81,9 +98,7 @@ class BaseSecurityGroup(object):
         :return: Bool
         """
         direction = 'revoke-security-group-ingress'
-        subject = self.IpPermissions
         if egress:
-            subject = self.IpPermissionsEgress
             direction = 'revoke-security-group-egress'
         command = ['ec2', direction,
                    '--region', self.region,
@@ -91,8 +106,8 @@ class BaseSecurityGroup(object):
                    '--ip-permissions', str(ip_permissions).replace("'", '"')
                    ]
         awscli(command)
-        subject.remove(ip_permissions)  # RFC: This is here for speed, should we use another _get() ?
         print('Revoked: {0}'.format(ip_permissions))  # TODO: Log(...)
+        self.changed = True
         return True
 
     def _create(self):
@@ -100,6 +115,13 @@ class BaseSecurityGroup(object):
         Create a Security Group
         :return:
         """
+        # AWS grants all new SGs this default outbound rule "This is pro-human & anti-machine behavior."
+        default_egress = {
+            'Ipv6Ranges': [],
+            'PrefixListIds': [],
+            'IpRanges': [{'CidrIp': '0.0.0.0/0'}],
+            'UserIdGroupPairs': [], 'IpProtocol': '-1'
+        }
         command = [
                 'ec2', 'create-security-group',
                 '--region', self.region,
@@ -108,10 +130,13 @@ class BaseSecurityGroup(object):
                 '--vpc-id', self.vpc
                 ]
         try:
-            awscli(command)
+            self.id = awscli(command, key='GroupId')
         except AWSDuplicate:
             return False  # OK if it already exists.
         print('Created {0}'.format(command))  # TODO: Log(...)
+        self.IpPermissions = []
+        self.IpPermissionsEgress = [default_egress]
+        self.changed = True
         return True
 
     def _get(self):
@@ -120,11 +145,25 @@ class BaseSecurityGroup(object):
         :return: Bool
         """
         command = ['ec2', 'describe-security-groups', '--region', self.region, '--group-names', self.name]
-        result = awscli(command, max=1)  # will raise NotFound if empty
-        security_groups = result['SecurityGroups'][0]
-        self.id = security_groups['GroupId']
-        self.owner = security_groups['OwnerId']
-        self.IpPermissions = security_groups['IpPermissions']
-        self.IpPermissionsEgress = security_groups['IpPermissionsEgress']
+        result = awscli(command, key='SecurityGroups', max=1)  # will raise NotFound if empty
+        me = result[0]
+        self.id = me['GroupId']
+        self.owner = me['OwnerId']
+        self.IpPermissions = self._break_out(me['IpPermissions'])
+        self.IpPermissionsEgress = self._break_out(me['IpPermissionsEgress'])
         print('Got {0}'.format(command))  # TODO: Log(...)
+        return True
+
+    def _delete(self):
+        """
+        Delete myself by my own id.
+        As of 20170114 no other methods call me. You must do `foo._delete()`
+        :return:
+        """
+        command = ['ec2', 'delete-security-group', '--region', self.region,
+                   # '--dry-run',
+                   '--group-id', self.id
+                   ]
+        awscli(command, decode_output=False)
+        print('Deleted {0}'.format(command))  # TODO: Log(...)
         return True
