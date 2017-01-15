@@ -116,8 +116,7 @@ def make_listener(s):
         raise ParseError("""
         Malformed argument for make_listener()
         Need format like '80/http>80/http' or '443/https>80/http+us-west-2:0123456789:certificate/uuid-string'
-        but got '{0}'""".format(s)
-        )
+        but got '{0}'""".format(s))
     d = {
         'InstancePort': int(internal_port),
         'InstanceProtocol': internal_protocol.upper(),
