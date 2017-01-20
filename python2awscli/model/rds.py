@@ -1,7 +1,7 @@
 """ -*- coding: utf-8 -*- """
 from pprint import pprint
 
-from python2awscli import bin_aws as awscli
+from python2awscli import bin_aws
 from python2awscli import must
 
 
@@ -25,7 +25,7 @@ class BaseRDS(object):
 
     def _get(self):
         command = ['rds', 'describe-db-instances', '--region', self.region]
-        result = awscli(command)['DBInstances']
+        result = bin_aws(command)['DBInstances']
         found = must.find.dict_in_list(key='DBName', needle=self.name, haystack=result)
         if not found:
             return False
@@ -54,7 +54,7 @@ class BaseRDS(object):
                    '--vpc-security-group-ids'
                    ]
         command.extend(self.groups)
-        result = awscli(command)
+        result = bin_aws(command)
         pprint(result)
         print('Created {0}'.format(command))  # TODO: Log(...)
         return True

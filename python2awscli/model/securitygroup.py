@@ -1,7 +1,6 @@
 """ -*- coding: utf-8 -*- """
-from pprint import pprint
 
-from python2awscli import bin_aws as awscli
+from python2awscli import bin_aws
 from python2awscli.error import AWSNotFound, ParseError, AWSDuplicate
 from python2awscli import must
 
@@ -86,7 +85,7 @@ class BaseSecurityGroup(object):
                    '--group-id', self.id,
                    '--ip-permissions', str(ip_permissions).replace("'", '"')
                    ]
-        awscli(command)
+        bin_aws(command)
         print('Authorized: {0}'.format(ip_permissions))  # TODO: Log(...)
         self.changed = True
         return True
@@ -105,7 +104,7 @@ class BaseSecurityGroup(object):
                    '--group-id', self.id,
                    '--ip-permissions', str(ip_permissions).replace("'", '"')
                    ]
-        awscli(command)
+        bin_aws(command)
         print('Revoked: {0}'.format(ip_permissions))  # TODO: Log(...)
         self.changed = True
         return True
@@ -130,7 +129,7 @@ class BaseSecurityGroup(object):
                 '--vpc-id', self.vpc
                 ]
         try:
-            self.id = awscli(command, key='GroupId')
+            self.id = bin_aws(command, key='GroupId')
         except AWSDuplicate:
             return False  # OK if it already exists.
         print('Created {0}'.format(command))  # TODO: Log(...)
@@ -145,7 +144,7 @@ class BaseSecurityGroup(object):
         :return: Bool
         """
         command = ['ec2', 'describe-security-groups', '--region', self.region, '--group-names', self.name]
-        result = awscli(command, key='SecurityGroups', max=1)  # will raise NotFound if empty
+        result = bin_aws(command, key='SecurityGroups', max=1)  # will raise NotFound if empty
         me = result[0]
         self.id = me['GroupId']
         self.owner = me['OwnerId']
@@ -164,6 +163,6 @@ class BaseSecurityGroup(object):
                    # '--dry-run',
                    '--group-id', self.id
                    ]
-        awscli(command, decode_output=False)
+        bin_aws(command, decode_output=False)
         print('Deleted {0}'.format(command))  # TODO: Log(...)
         return True

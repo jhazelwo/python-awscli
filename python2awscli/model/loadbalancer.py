@@ -1,7 +1,6 @@
 """ -*- coding: utf-8 -*- """
-from pprint import pprint
 
-from python2awscli import bin_aws as awscli
+from python2awscli import bin_aws
 from python2awscli.task import merge_elements
 from python2awscli.error import AWSNotFound
 from python2awscli import must
@@ -45,7 +44,7 @@ class BaseLoadBalancer(object):
     def _get(self):
         command = ['elb', 'describe-load-balancers', '--region', self.region,
                    '--load-balancer-names', self.name]
-        result = awscli(command)
+        result = bin_aws(command)
         base = result['LoadBalancerDescriptions'][0]
         self.dns = base['DNSName']
         self.groups = base['SecurityGroups']
@@ -67,7 +66,7 @@ class BaseLoadBalancer(object):
                    '--load-balancer-name', self.name,
                    '--availability-zones', zone
                    ]
-        awscli(command)
+        bin_aws(command)
         self.zones.append(zone)
         print('Enabled {0}'.format(command))  # TODO: Log(...)
         return True
@@ -77,7 +76,7 @@ class BaseLoadBalancer(object):
                    '--load-balancer-name', self.name,
                    '--availability-zones', zone
                    ]
-        awscli(command)
+        bin_aws(command)
         self.zones.remove(zone)
         print('Disabled {0}'.format(command))  # TODO: Log(...)
         return True
@@ -87,7 +86,7 @@ class BaseLoadBalancer(object):
                    '--load-balancer-name', self.name,
                    '--listeners', str(listener).replace("'", '"')
                    ]
-        awscli(command)
+        bin_aws(command)
         self.listeners.append(listener)
         print('Added {0}'.format(command))  # TODO: Log(...)
         return True
@@ -97,7 +96,7 @@ class BaseLoadBalancer(object):
                    '--load-balancer-name', self.name,
                    '--load-balancer-ports', str(listener['LoadBalancerPort'])
                    ]
-        awscli(command)
+        bin_aws(command)
         self.listeners.remove(listener)
         print('Removed {0}'.format(command))  # TODO: Log(...)
         return True
@@ -108,7 +107,7 @@ class BaseLoadBalancer(object):
                    '--load-balancer-name', self.name,
                    '--instances']
         command.extend(instances)
-        awscli(command)
+        bin_aws(command)
         for this in instances:
             if this not in self.instances:
                 self.instances.append(this)
@@ -121,7 +120,7 @@ class BaseLoadBalancer(object):
                    '--load-balancer-name', self.name,
                    '--instances']
         command.extend(instances)
-        awscli(command)
+        bin_aws(command)
         for this in instances:
             if this in self.instances:
                 self.instances.remove(this)
@@ -142,7 +141,7 @@ class BaseLoadBalancer(object):
         command.append('--listeners')
         for listen in listeners:
             command.append(str(listen).replace("'", '"'))  # Convert Dictionaries to Strings for JSON
-        result = awscli(command)
+        result = bin_aws(command)
         self.dns = result['DNSName']
         self.zones = zones
         self.groups = groups
@@ -157,7 +156,7 @@ class BaseLoadBalancer(object):
                    '--load-balancer-name', self.name,
                    '--instances']
         command.extend(instances)
-        awscli(command, decode_output=False)
+        bin_aws(command, decode_output=False)
         print('Attached {0}'.format(command))  # TODO: Log(...)
 
     def _detach(self, instances):
@@ -167,7 +166,7 @@ class BaseLoadBalancer(object):
                    '--load-balancer-name', self.name,
                    '--instances']
         command.extend(instances)
-        awscli(command, decode_output=False)
+        bin_aws(command, decode_output=False)
         print('Detached {0}'.format(command))  # TODO: Log(...)
 
     def _groups(self, groups):
@@ -176,5 +175,5 @@ class BaseLoadBalancer(object):
                    '--security-groups'
                    ]
         command.extend(groups)
-        awscli(command, decode_output=False)
+        bin_aws(command, decode_output=False)
         print('Applied {0}'.format(command))  # TODO: Log(...)

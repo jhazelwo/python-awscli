@@ -1,7 +1,7 @@
 """ -*- coding: utf-8 -*- """
 from time import sleep
 
-from python2awscli import bin_aws as awscli
+from python2awscli import bin_aws
 from python2awscli.error import MissingArgument
 
 
@@ -31,7 +31,7 @@ class BaseVolume(object):
                    '--instance-id', self.instance,
                    '--device', self.device
                    ]
-        awscli(command)
+        bin_aws(command)
         print('Attached {0}'.format(command))  # TODO: Log(...)
 
     def _wait_for_volume(self):
@@ -40,7 +40,7 @@ class BaseVolume(object):
             command = ['ec2', 'describe-volumes', '--region', self.region,
                        '--volume-ids', self.id
                        ]
-            volumes = awscli(command, key='Volumes', max=1)
+            volumes = bin_aws(command, key='Volumes', max=1)
             if volumes[0]['State'] == 'available':
                 return True
             else:
@@ -51,7 +51,7 @@ class BaseVolume(object):
         for i in range(30):
             command = ['ec2', 'describe-instances', '--region', self.region,
                        '--instance-ids', self.instance]
-            reservations = awscli(command, key='Reservations')
+            reservations = bin_aws(command, key='Reservations')
             instances = reservations[0]['Instances']
             state = instances[0]['State']
             if state['Code'] == 0:  # Pending
@@ -70,7 +70,7 @@ class BaseVolume(object):
                    'Name=attachment.device,Values={0}'.format(self.device),
                    'Name=attachment.instance-id,Values={0}'.format(self.instance),
                    ]
-        result = awscli(command, key='Volumes', max=1)
+        result = bin_aws(command, key='Volumes', max=1)
         if not result:
             return False
         self.id = result[0]['VolumeId']
@@ -81,7 +81,7 @@ class BaseVolume(object):
         if self.instance:
             command = ['ec2', 'describe-instances', '--region', self.region,
                        '--instance-ids', self.instance]
-            reservations = awscli(command, key='Reservations')
+            reservations = bin_aws(command, key='Reservations')
             # Force correct AZ
             self.zone = reservations[0]['Instances'][0]['Placement']['AvailabilityZone']
         if not self.zone:
@@ -91,7 +91,7 @@ class BaseVolume(object):
                    '--volume-type', self.kind,
                    '--availability-zone', self.zone
                    ]
-        result = awscli(command)
+        result = bin_aws(command)
         self.id = result['VolumeId']
         print('Created {0}'.format(command))  # TODO: Log(...)
         command = ['ec2', 'create-tags',
@@ -99,6 +99,6 @@ class BaseVolume(object):
                    '--resources', self.id,
                    '--tags', 'Key=Name,Value={0}'.format(self.name)
                    ]
-        awscli(command)  # No output on success
+        bin_aws(command, decode_output=False)
         print('Named {0}'.format(command))  # TODO: Log(...)
         return True

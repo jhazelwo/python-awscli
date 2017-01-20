@@ -1,9 +1,8 @@
-#!/usr/bin/env python3
 """ -*- coding: utf-8 -*- """
 import os
 import fileasobj
 
-from python2awscli import bin_aws as awscli
+from python2awscli import bin_aws
 from python2awscli.error import AWSNotFound, AWSDuplicate
 
 
@@ -33,7 +32,7 @@ class BaseKeyPair(object):
                    '--key-name', self.name,
                    '--query', 'KeyMaterial',
                    '--output', 'text']
-        result = awscli(command, decode_output=False)
+        result = bin_aws(command, decode_output=False)
         private_key.add(result)
         private_key.save()
         print('Created {0}'.format(command))  # TODO: Log(...)
@@ -42,7 +41,7 @@ class BaseKeyPair(object):
     def _get(self):
         command = ['ec2', 'describe-key-pairs', '--region', self.region,
                    '--key-names', self.name]
-        result = awscli(command)
+        result = bin_aws(command)
         if not result:
             return False
         self.fingerprint = result['KeyPairs'][0]['KeyFingerprint']

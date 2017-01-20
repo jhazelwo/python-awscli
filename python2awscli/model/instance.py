@@ -1,10 +1,8 @@
 """ -*- coding: utf-8 -*- """
-from pprint import pprint
 
-from python2awscli import bin_aws as awscli
-from python2awscli.error import TooMany, AWSNotFound
+from python2awscli import bin_aws
+from python2awscli.error import TooMany
 from python2awscli import must
-
 
 
 class BaseInstance(object):
@@ -55,7 +53,7 @@ class BaseInstance(object):
         if self.script:
             command.append('--user-data')
             command.append('file://{0}'.format(self.script))
-        instances = awscli(command, key='Instances')
+        instances = bin_aws(command, key='Instances')
         print('Created {0}'.format(command))  # TODO: Log(...)
         for this in instances:
             self.id.add(this['InstanceId'])
@@ -64,7 +62,7 @@ class BaseInstance(object):
                        '--resources', this['InstanceId'],
                        '--tags', 'Key=Name,Value={0}'.format(self.name)
                        ]
-            awscli(command, decode_output=False)
+            bin_aws(command, decode_output=False)
             print('Named {0}'.format(command))  # TODO: Log(...)
         self.deficit = 0
         return True
@@ -75,7 +73,7 @@ class BaseInstance(object):
                    'Name=resource-type,Values=instance',
                    'Name=value,Values={0}'.format(self.name)
                    ]
-        result = awscli(command)['Tags']
+        result = bin_aws(command)['Tags']
         if not result:
             self.deficit = self.count  # Result is []. Deficit is 100%.
             return False
@@ -88,7 +86,7 @@ class BaseInstance(object):
         # if self.zone:
         #     command.append('--filter',)
         #     command.append('Name=availability-zone,Values={0}'.format(self.zone))
-        reservations = awscli(command, key='Reservations')
+        reservations = bin_aws(command, key='Reservations')
         all_instances = []  # Will become list() of ALL instances (even terminated) as dict()s
         for this in reservations:  # Extract Instances from each Reservation and merge them into a list()
             all_instances.extend(this['Instances'])
