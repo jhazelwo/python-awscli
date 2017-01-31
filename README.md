@@ -10,7 +10,7 @@ let AWS's code and permission structure do the real work.
 * Full examples in [doc/example.py](https://github.com/jhazelwo/python-awscli/blob/master/doc/example.py)
 * Some brief examples:
 
-```
+```python
 vpc_dev = VPC(name='DEV', region='us-east-1', cidr='10.10.0.0/16', ipv6=False)
 
 my_subnet_a = Subnet(name='www-a', region='us-east-1', vpc=vpc_dev.id, cidr='10.10.1.0/24', zone='us-east-1a')
